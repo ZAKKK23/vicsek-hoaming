@@ -38,7 +38,7 @@
         <li>A uniform random angular kick of size <strong>&eta;</strong> is added every step — the classic Vicsek noise parameter that drives the order/disorder transition.</li>
         <li>Every agent moves at the <strong>same constant speed</strong> every step. There's no crowding-based speed governor, because there are no Voronoi cells to measure.</li>
       </ul>
-      <p>Since bare Vicsek has no notion of a target at all, homing toward the nearest target is kept as an extension: each agent's heading is a blend of the neighbor-consensus direction and the direction to its nearest target, weighted by <strong>&nu;</strong> — the same role &nu; always played, just blending two directions instead of three forces.</p>
+      <p>Since bare Vicsek has no notion of a target at all, homing toward the nearest target is kept as an extension: each agent's heading is a blend of the neighbor-consensus direction and the direction to its nearest target, with <strong>&nu;</strong> weighting the alignment term and <strong>&mu;</strong> (the <em>homing strength</em>, default 1) weighting the homing term. Only the ratio &nu;/&mu; changes an agent's heading, but having &mu; as its own control lets you dial homing up or down directly.</p>
 
       <h2>Two implementations, one model</h2>
       <ul>
@@ -89,6 +89,10 @@
             <input type="range" id="nuSlider" min="0" max="8" step="0.05" value="2.5" />
             <span class="readout" id="nuVal">2.50</span>
           </div>
+          <div class="ctrl">&mu; (homing):
+            <input type="range" id="muSlider" min="0" max="8" step="0.05" value="1" />
+            <span class="readout" id="muVal">1.00</span>
+          </div>
           <div class="ctrl">R (radius):
             <input type="range" id="rSlider" min="0.5" max="20" step="0.1" value="3" />
             <span class="readout" id="rVal">3.00</span>
@@ -118,7 +122,7 @@
     <div class="prose">
       <p>Requires base MATLAB only — no toolboxes at all (the pairwise-distance computation is plain broadcasting, not <code>pdist</code>/<code>squareform</code>, so it doesn't even need the Statistics Toolbox). Run:</p>
       <div class="formula">cd matlab<br />matlab -r dynamics</div>
-      <p>...or open <code>dynamics.m</code> in the MATLAB editor and run it. You'll be prompted for the number of straight-line targets (0–5); one asymmetrically-oscillating target is always added on top. An interactive figure then opens with a control panel (agents' constant speed v0, &nu;, R, &eta;, shared horizontal speed, each straight target's height, and the oscillating target's height/amplitude/q/n — Apply / Pause / Reset Targets).</p>
+      <p>...or open <code>dynamics.m</code> in the MATLAB editor and run it. You'll be prompted for the number of straight-line targets (0–5); one asymmetrically-oscillating target is always added on top. An interactive figure then opens with a control panel (agents' constant speed v0, &nu;, &mu; (homing strength), R, &eta;, shared horizontal speed, each straight target's height, and the oscillating target's height/amplitude/q/n — Apply / Pause / Reset Targets).</p>
       <p>This folder only ships three MATLAB files: <code>dynamics.m</code>, <code>Target.m</code> (generic target geometry, not Voronoi-specific), and <code>nearestOnSegment.m</code> (a small helper <code>Target.m</code> depends on). Every VTP-only file — <code>neighborhoods.m</code>, <code>alignTo.m</code>, <code>transition.m</code>, <code>voronoiProjectToBoundary.m</code>, and the Voronoi-diagnostic utilities — is gone, since none of them are used or meaningful once the dynamics are Vicsek.</p>
     </div>
 

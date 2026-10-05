@@ -30,8 +30,10 @@ classical **Vicsek model**:
 Since bare Vicsek has no notion of a target, homing toward the nearest
 target is kept as an extension: each agent's heading is a blend of the
 neighbor-consensus direction and the direction to its nearest target,
-weighted by **&nu;** — the same role &nu; always played, just blending two
-directions instead of three forces.
+with **&nu;** weighting the alignment term and **&mu;** — the *homing
+strength*, default 1 — weighting the homing term. Only the ratio &nu;/&mu;
+changes an agent's heading, but &mu; is its own control so you can dial homing
+up or down directly instead of rescaling &nu;.
 
 ### Target motion (unchanged from the VTP version)
 
@@ -84,7 +86,7 @@ or open `matlab/dynamics.m` in the MATLAB editor and run it. You'll be
 prompted for the number of straight-line targets (0–5); one
 asymmetrically-oscillating target is always added on top. An interactive
 figure then opens with a control panel (agents' constant speed v0, &nu;,
-R, &eta;, shared horizontal speed, each straight target's height, and the
+&mu; (homing strength), R, &eta;, shared horizontal speed, each straight target's height, and the
 oscillating target's height/amplitude/q/n — Apply / Pause / Reset Targets).
 
 This folder only ships three MATLAB files: `dynamics.m`, `Target.m`
@@ -119,8 +121,8 @@ git push -u origin main
 
 The browser port implements the exact same Vicsek + homing model as
 `dynamics.m` — metric-radius vector-average alignment, uniform noise, and
-constant speed, blended with homing toward the nearest target weighted by
-&nu; — ported line-for-line from MATLAB to JS, including the identical
+constant speed, blended with homing toward the nearest target (&nu; weights
+alignment, &mu; weights homing) — ported line-for-line from MATLAB to JS, including the identical
 down/up state machine for the oscillating target. There's no approximation
 to note here (unlike the VTP variants' Voronoi-boundary-projection
 shortcut): Vicsek's metric-radius neighbor check is exactly the same

@@ -21,14 +21,16 @@
    Homing toward the nearest target is kept as an extension on top of
    bare Vicsek (which has no notion of a target at all): each agent's
    heading is a blend of the neighbor-consensus direction and the
-   direction to its nearest target, weighted by nu.
+   direction to its nearest target. nu weights the alignment term and
+   mu (homing strength, default 1) weights the homing term.
    =========================================================== */
 
 const TARGET_COLORS = ["#4c8bf5", "#f5a742", "#4cd97d", "#f2685f", "#c792ea", "#3fd0c9"];
 
 const PARAMS = {
   N: 170,             // number of agents ("cells")
-  NU_DEFAULT: 2.5,     // default alignment-vs-homing blend weight (live-editable: sim.nu)
+  NU_DEFAULT: 2.5,     // default alignment weight in the alignment-vs-homing blend (live-editable: sim.nu)
+  MU_DEFAULT: 1,        // default homing strength — weight on the direction to the nearest target (live-editable: sim.mu)
   R_DEFAULT: 3,         // default Vicsek interaction radius (live-editable: sim.R)
   ETA_DEFAULT: 0.3,      // default Vicsek noise strength, radians (live-editable: sim.eta)
   VX_DEFAULT: 0.15,    // default shared horizontal speed of every target
@@ -46,7 +48,8 @@ class VicsekSim {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.cellSpd = 1.0;             // v0 — the CONSTANT speed of every agent
-    this.nu = PARAMS.NU_DEFAULT;     // alignment-vs-homing blend — live-editable
+    this.nu = PARAMS.NU_DEFAULT;     // alignment weight — live-editable
+    this.mu = PARAMS.MU_DEFAULT;     // homing strength — live-editable
     this.R = PARAMS.R_DEFAULT;       // Vicsek interaction radius — live-editable
     this.eta = PARAMS.ETA_DEFAULT;   // Vicsek noise strength — live-editable
     this.vx = PARAMS.VX_DEFAULT;     // shared horizontal speed of every target — live-editable
@@ -176,10 +179,10 @@ class VicsekSim {
       const hNorm = Math.hypot(hbest[0], hbest[1]);
       if (hNorm > 1e-12) hDir = [hbest[0] / hNorm, hbest[1] / hNorm];
 
-      // blend alignment consensus with homing bias (nu weights
-      // alignment vs. homing, same role it always played)
-      const bx = this.nu * alignDir[0] + hDir[0];
-      const by = this.nu * alignDir[1] + hDir[1];
+      // blend alignment consensus with homing bias: nu weights
+      // alignment, mu (homing strength) weights the pull to the target
+      const bx = this.nu * alignDir[0] + this.mu * hDir[0];
+      const by = this.nu * alignDir[1] + this.mu * hDir[1];
       const blendTheta = Math.atan2(by, bx);
 
       // Vicsek noise: independent uniform angular kick, in [-eta/2, +eta/2]

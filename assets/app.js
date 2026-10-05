@@ -27,6 +27,8 @@ const cellSpdSlider = document.getElementById("cellSpd");
 const cellSpdVal = document.getElementById("cellSpdVal");
 const nuSlider = document.getElementById("nuSlider");
 const nuVal = document.getElementById("nuVal");
+const muSlider = document.getElementById("muSlider");
+const muVal = document.getElementById("muVal");
 const rSlider = document.getElementById("rSlider");
 const rVal = document.getElementById("rVal");
 const etaSlider = document.getElementById("etaSlider");
@@ -96,6 +98,10 @@ nuSlider.addEventListener("input", () => {
   sim.nu = +nuSlider.value;
   nuVal.textContent = sim.nu.toFixed(2);
 });
+muSlider.addEventListener("input", () => {
+  sim.mu = +muSlider.value;
+  muVal.textContent = sim.mu.toFixed(2);
+});
 rSlider.addEventListener("input", () => {
   sim.R = +rSlider.value;
   rVal.textContent = sim.R.toFixed(2);
@@ -118,6 +124,7 @@ btnReset.addEventListener("click", () => {
   sim.setup(nRect);
   cellSpdSlider.value = 1; sim.cellSpd = 1; cellSpdVal.textContent = "1.00";
   nuSlider.value = 2.5; sim.nu = 2.5; nuVal.textContent = "2.50";
+  muSlider.value = 1; sim.mu = 1; muVal.textContent = "1.00";
   rSlider.value = 3; sim.R = 3; rVal.textContent = "3.00";
   etaSlider.value = 0.3; sim.eta = 0.3; etaVal.textContent = "0.30";
   vxSlider.value = 0.15; sim.vx = 0.15; vxVal.textContent = "0.150";
@@ -132,7 +139,7 @@ function loop() {
   sim.step();
   sim.draw();
   const nRect = sim.nRect;
-  statusLine.textContent = `t = ${sim.t} | ${sim.targets.length} aligned target${sim.targets.length === 1 ? "" : "s"} (${nRect} straight + 1 asym. sine) | vx = ${sim.vx.toFixed(3)} | Vicsek: R = ${sim.R.toFixed(2)}, \u03b7 = ${sim.eta.toFixed(2)}, \u03bd = ${sim.nu.toFixed(2)}`;
+  statusLine.textContent = `t = ${sim.t} | ${sim.targets.length} aligned target${sim.targets.length === 1 ? "" : "s"} (${nRect} straight + 1 asym. sine) | vx = ${sim.vx.toFixed(3)} | Vicsek: R = ${sim.R.toFixed(2)}, \u03b7 = ${sim.eta.toFixed(2)}, \u03bd = ${sim.nu.toFixed(2)}, \u03bc = ${sim.mu.toFixed(2)}`;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

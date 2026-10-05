@@ -24,16 +24,18 @@
 %  Homing toward the nearest target is kept as an extension on top of
 %  the bare Vicsek rule (classic Vicsek has no notion of a target at
 %  all): each agent's new heading is a blend of the neighbor-consensus
-%  direction and the direction to its nearest target, weighted by nu —
-%  same role nu always played, just blending two directions now
-%  instead of three forces. Target.m (homeToTarget) is the only piece
-%  of the old machinery still in use, since it's generic target
-%  geometry, not Voronoi-specific.
+%  direction and the direction to its nearest target. nu weights the
+%  alignment term and mu weights the homing term (mu = HOMING STRENGTH,
+%  default 1, so the original behavior is unchanged). Only the ratio
+%  nu/mu affects the heading; mu is a separate knob so you can raise or
+%  lower homing directly instead of having to rescale nu. Target.m
+%  (homeToTarget) is the only piece of the old machinery still in use,
+%  since it's generic target geometry, not Voronoi-specific.
 %
 %  A control panel lets you:
 %    - Change the cells' (agents') constant speed v0
-%    - Change nu (alignment-vs-homing blend), R (the Vicsek interaction
-%      radius), and eta (noise strength)
+%    - Change nu (alignment weight), mu (homing strength), R (the Vicsek
+%      interaction radius), and eta (noise strength)
 %    - Change the shared horizontal speed (vx) of every target
 %    - Change each straight-line target's height
 %    - Change the oscillating target's height (oscillation center),
@@ -50,7 +52,8 @@
 %% ---- Simulation parameters ----------------------------------
 N      = 200;
 R      = 3;          % Vicsek interaction radius — editable live (see cur_R below)
-nu     = 2.5;         % alignment-vs-homing blend weight — editable live (see cur_nu below)
+nu     = 2.5;         % alignment weight in the alignment-vs-homing blend — editable live (see cur_nu below)
+mu     = 1;           % HOMING STRENGTH — weight on the direction to the nearest target — editable live (see cur_mu below)
 eta    = 0.3;         % Vicsek noise strength (radians) — editable live (see cur_eta below)
 tmax   = 5000;
 
@@ -167,10 +170,11 @@ lbl_cell = uicontrol(pan,'Style','text', ...
 addlistener(sld_cell,'Value','PostSet', ...
     @(~,~) set(lbl_cell,'String', sprintf('%.2f', sld_cell.Value)));
 
-% ---- Dynamics constants (nu, R, eta) row ------------------------
-% nu = alignment-vs-homing blend, R = Vicsek interaction radius (the
-% metric neighbor cutoff — replaces the Voronoi/Delaunay neighborhood
-% entirely), eta = Vicsek noise strength. All three are just weights/
+% ---- Dynamics constants (nu, mu, R, eta) row ---------------------
+% nu = alignment weight, mu = homing strength (weight on the direction
+% to the nearest target), R = Vicsek interaction radius (the metric
+% neighbor cutoff — replaces the Voronoi/Delaunay neighborhood
+% entirely), eta = Vicsek noise strength. All four are just weights/
 % scales used every step, so they take effect immediately on Apply.
 uicontrol(pan, 'Style','text', ...
     'String', 'Dynamics', ...
@@ -179,27 +183,35 @@ uicontrol(pan, 'Style','text', ...
     'Position', [0.01  0.82  0.09  0.08]);
 
 uicontrol(pan,'Style','text','String','nu:', ...
-    'Units','normalized','Position',[0.11 0.82 0.05 0.08],...
+    'Units','normalized','Position',[0.11 0.82 0.04 0.08],...
     'FontSize',8,'HorizontalAlignment','right');
 edt_nu = uicontrol(pan,'Style','edit', ...
     'String', num2str(nu), ...
-    'Units','normalized','Position',[0.17  0.825  0.11  0.065], ...
+    'Units','normalized','Position',[0.16  0.825  0.09  0.065], ...
+    'FontSize',8, 'BackgroundColor', [1 1 1]);
+
+uicontrol(pan,'Style','text','String','mu (homing):', ...
+    'Units','normalized','Position',[0.27 0.82 0.11 0.08],...
+    'FontSize',8,'HorizontalAlignment','right');
+edt_mu = uicontrol(pan,'Style','edit', ...
+    'String', num2str(mu), ...
+    'Units','normalized','Position',[0.39  0.825  0.09  0.065], ...
     'FontSize',8, 'BackgroundColor', [1 1 1]);
 
 uicontrol(pan,'Style','text','String','R:', ...
-    'Units','normalized','Position',[0.32 0.82 0.04 0.08],...
+    'Units','normalized','Position',[0.52 0.82 0.04 0.08],...
     'FontSize',8,'HorizontalAlignment','right');
 edt_R = uicontrol(pan,'Style','edit', ...
     'String', num2str(R), ...
-    'Units','normalized','Position',[0.37  0.825  0.11  0.065], ...
+    'Units','normalized','Position',[0.57  0.825  0.09  0.065], ...
     'FontSize',8, 'BackgroundColor', [1 1 1]);
 
 uicontrol(pan,'Style','text','String','eta:', ...
-    'Units','normalized','Position',[0.52 0.82 0.05 0.08],...
+    'Units','normalized','Position',[0.70 0.82 0.05 0.08],...
     'FontSize',8,'HorizontalAlignment','right');
 edt_eta = uicontrol(pan,'Style','edit', ...
     'String', num2str(eta), ...
-    'Units','normalized','Position',[0.58  0.825  0.11  0.065], ...
+    'Units','normalized','Position',[0.76  0.825  0.09  0.065], ...
     'FontSize',8, 'BackgroundColor', [1 1 1]);
 
 % ---- Motion row: shared horizontal speed (vx) ------------------
@@ -355,6 +367,7 @@ btn_reset = uicontrol(pan,'Style','pushbutton','String','Reset Targets', ...
 %% ---- Mutable simulation variables (plain script variables) --
 cur_cell_spd = cell_spd0;
 cur_nu       = nu;
+cur_mu       = mu;
 cur_R        = R;
 cur_eta      = eta;
 cur_vx       = vx0;
@@ -398,6 +411,14 @@ while t < tmax && ishandle(fig)
         end
         cur_nu = newNu;
         set(edt_nu, 'String', num2str(cur_nu));
+
+        % ---- Homing strength mu: applies immediately too ----
+        newMu = str2double(get(edt_mu, 'String'));
+        if isnan(newMu) || newMu < 0
+            newMu = cur_mu;   % invalid entry: keep current value
+        end
+        cur_mu = newMu;
+        set(edt_mu, 'String', num2str(cur_mu));
 
         % ---- Vicsek interaction radius R: applies immediately too ----
         newR = str2double(get(edt_R, 'String'));
@@ -528,9 +549,9 @@ while t < tmax && ishandle(fig)
     hDir   = h0 ./ hNorm;
     hDir(hNorm < eps, :) = 0;   % degenerate case: sitting exactly on the target
 
-    % blend alignment consensus with homing bias (nu weights alignment
-    % vs. homing, same role it always played)
-    blend      = cur_nu*alignDir + hDir;
+    % blend alignment consensus with homing bias: nu weights alignment,
+    % mu (homing strength) weights the pull toward the nearest target
+    blend      = cur_nu*alignDir + cur_mu*hDir;
     blendTheta = atan2(blend(:,2), blend(:,1));
 
     % Vicsek noise: independent uniform angular kick per agent, in
@@ -592,8 +613,8 @@ while t < tmax && ishandle(fig)
         end
 
         set(ax, 'NextPlot', 'replace');
-        title(ax, sprintf('t = %d    |    %d aligned targets (%d straight + 1 asym. sine)    |    vx = %.3f, q = %.3f, n = %.2f    |    Vicsek: R = %.2f, eta = %.2f, \nu = %.2f', ...
-              t, nT, nRect, cur_vx, cur_Omega, cur_n, cur_R, cur_eta, cur_nu), 'FontSize', 9);
+        title(ax, sprintf('t = %d    |    %d aligned targets (%d straight + 1 asym. sine)    |    vx = %.3f, q = %.3f, n = %.2f    |    Vicsek: R = %.2f, eta = %.2f, nu = %.2f, mu = %.2f', ...
+              t, nT, nRect, cur_vx, cur_Omega, cur_n, cur_R, cur_eta, cur_nu, cur_mu), 'FontSize', 9);
         drawnow limitrate;
     end
 
