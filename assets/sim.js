@@ -97,6 +97,16 @@ class VicsekSim {
     });
     this.oscIdx = this.targets.length - 1;
 
+    // ---- persistent target assignment ----
+    // Pure nearest-target homing is winner-take-all and absorbing: every
+    // time the oscillating target swings away, its agents end up closer to
+    // a straight lane and switch for good, so the oscillating target ends
+    // up with nobody. Each agent is therefore assigned a target once, here
+    // (balanced round-robin), and homes to that target only.
+    const T = this.targets.length;
+    this.assign = new Int8Array(N);
+    for (let i = 0; i < N; i++) this.assign[i] = i % T;
+
     this.xCommon = PARAMS.X_START;   // shared x — one value for every target
     this.t = 0;
     this.cam = null;
@@ -168,13 +178,9 @@ class VicsekSim {
       const alignNorm = Math.hypot(sumx, sumy);
       if (alignNorm > 1e-12) alignDir = [sumx / alignNorm, sumy / alignNorm];
 
-      // homing toward the nearest target
-      let hbest = null, hbestD2 = Infinity;
-      for (const tp of tpos) {
-        const dx = tp[0] - xi, dy = tp[1] - yi;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < hbestD2) { hbestD2 = d2; hbest = [dx, dy]; }
-      }
+      // homing toward the agent's assigned target (see setup)
+      const tp = tpos[this.assign[i]];
+      const hbest = [tp[0] - xi, tp[1] - yi];
       let hDir = [0, 0];
       const hNorm = Math.hypot(hbest[0], hbest[1]);
       if (hNorm > 1e-12) hDir = [hbest[0] / hNorm, hbest[1] / hNorm];
