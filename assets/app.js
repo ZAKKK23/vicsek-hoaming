@@ -139,7 +139,9 @@ function loop() {
   sim.step();
   sim.draw();
   const nRect = sim.nRect;
-  statusLine.textContent = `t = ${sim.t} | ${sim.targets.length} aligned target${sim.targets.length === 1 ? "" : "s"} (${nRect} straight + 1 asym. sine) | vx = ${sim.vx.toFixed(3)} | Vicsek: R = ${sim.R.toFixed(2)}, \u03b7 = ${sim.eta.toFixed(2)}, \u03bd = ${sim.nu.toFixed(2)}, \u03bc = ${sim.mu.toFixed(2)}`;
+  const GREEN_K = 2, NEAR_R = 3; // green = TARGET_COLORS[2]
+  const greenTxt = sim.targets.length > GREEN_K ? `cells near green T${GREEN_K + 1} (r ≤ ${NEAR_R}): ${sim.countNear(GREEN_K, NEAR_R)} | ` : "";
+  statusLine.textContent = `${greenTxt}t = ${sim.t} |${sim.targets.length} aligned target${sim.targets.length === 1 ? "" : "s"} (${nRect} straight + 1 asym. sine) | vx = ${sim.vx.toFixed(3)} | Vicsek: R = ${sim.R.toFixed(2)}, \u03b7 = ${sim.eta.toFixed(2)}, \u03bd = ${sim.nu.toFixed(2)}, \u03bc = ${sim.mu.toFixed(2)}`;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

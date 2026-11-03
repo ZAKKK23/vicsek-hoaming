@@ -120,6 +120,19 @@ class VicsekSim {
       : tg.height - tg.amp * Math.cos(tg.localPhase);
     return [this.xCommon, y];
   }
+  // number of agents within distance r of target k
+  countNear(k, r) {
+    const tg = this.targets[k];
+    if (!tg) return 0;
+    const [tx, ty] = this.targetPos(tg);
+    const r2 = r * r;
+    let c = 0;
+    for (let i = 0; i < PARAMS.N; i++) {
+      const dx = this.X[2 * i] - tx, dy = this.X[2 * i + 1] - ty;
+      if (dx * dx + dy * dy <= r2) c++;
+    }
+    return c;
+  }
   targetVel(tg) {
     if (!tg.osc) return [this.vx, 0];
     const vy = tg.goingDown
